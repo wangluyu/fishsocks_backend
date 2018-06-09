@@ -13,17 +13,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Helpers\Sms;
 use Illuminate\Support\Facades\DB;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
-class AuthController extends Controller
+class AuthController extends AuthBaseController
 {
 
     private $messages = [
         'phone.required' => '请输入手机号',
         'phone.size' => '请填写正确的手机号',
-        'name.required'  => '请输入用户名',
-        'name.min'  => '用户名的字符不能少于6位',
-        'name.max'  => '用户名的字符不能超过20位',
         'password.required'  => '请输入密码',
         'password.min'  => '密码不能少于6位',
         'password.max'  => '密码不能超过20位',
@@ -38,6 +34,10 @@ class AuthController extends Controller
             'phone'   => 'required|string|size:11'
         ];
         $params = $this->validate($request, $rules, $this->messages);
+
+        if(User::where('phone',$request->phone)->exists()){
+            return $this->error('此手机号已注册');
+        }
         $phone = $params['phone'];
         $code = new VerificationCode();
         //查找60秒内发送的验证码
@@ -71,14 +71,15 @@ class AuthController extends Controller
         // 验证规则，使用手机号码登录
         $rules = [
             'phone'   => 'required|string|size:11',
-            'name'   => 'required|string|min:6|max:20',
             'password' => 'required|string|min:6|max:20',
             'code' => 'required|string|size:4',
         ];
 
         // 验证参数，如果验证失败，则会抛出 ValidationException 的异常
         $this->validate($request, $rules, $this->messages);
-
+        if(User::where('phone',$request->phone)->exists()){
+            return $this->error('此手机号已注册');
+        }
         //查找60秒内发送的验证码
         $phone = $request->phone;
         $code = DB::table('verification_codes')
@@ -93,7 +94,6 @@ class AuthController extends Controller
             //创建新用户
             $user = new User;
             $user->phone = $request->phone;
-            $user->name = $request->name;
             $user->password = bcrypt($request->password);
             $user->status = 1;
             $user_id = $user->save();
@@ -103,6 +103,7 @@ class AuthController extends Controller
                 "server_port"   =>  empty($last_port)?9526:$last_port,
                 "password"  =>  randomString()
             ];
+//            $add_port = false;
             $add_port = true;
             $try_times = 0;
             while(!$add_port){
@@ -117,10 +118,18 @@ class AuthController extends Controller
             $port = new Port();
             $port->user_id = $user_id;
             $port->port = $send_port['server_port'];
+            $port->ip = '207.246.91.225';
             $port->password = $send_port['password'];
-            $port->flow = 5000;
             $port->status = 1;
-            $port->save();
+            $port_id = $port->save();
+            //将赠送的500M流量添加到数据库
+            $flow = new App\Flow();
+            $flow->port_id = $port_id;
+            $flow->flow = 500*1024*1024;
+            $flow->type = 1;
+            $flow->month = date('Ym');
+            $flow->day = date('Ymd');
+            $flow->save();
             DB::commit();
             return $this->success('注册成功');
         }catch (Exception $e){
@@ -152,9 +161,9 @@ class AuthController extends Controller
         $params['status'] = 1;
         // 使用 Auth 登录用户，如果登录成功，则返回 201 的 code 和 token，如果登录失败则返回
         if($token = Auth::guard('api')->attempt($params)){
-            return $this->success('success','bearer ' . $token,201);
+            return $this->success('success','bearer ' . $token);
         }else{
-            return $this->error('error');
+            return $this->error('账号不正确或密码错误');
         }
     }
 

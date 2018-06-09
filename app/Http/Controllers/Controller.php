@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-class Controller extends BaseController
+class Controller extends AuthBaseController
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
-
-    public static function getUser(){
-        return JWTAuth::parseToken()->authenticate();
+    public $user;
+    public $user_id;
+    public function __construct()
+    {
+        parent::__construct();
+        $this->user = JWTAuth::parseToken()->authenticate();
+        $this->user_id = $this->user['id'];
     }
 }

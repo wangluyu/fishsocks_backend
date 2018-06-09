@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateUsersTable extends Migration
+class CreateFlowsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,14 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('flows', function (Blueprint $table) {
             $table->engine = 'InnoDB';
             $table->increments('id');
-            $table->string('phone',11)->unique()->comment('手机号');
-            $table->string('password')->comment('密码');
-            $table->tinyInteger('status')->comment('用户状态 0：未激活 1：正常 -1：已禁用');
+            $table->integer('port_id')->comment('端口id');
+            $table->bigInteger('flow')->comment('流量');
+            $table->tinyInteger('type')->comment('类型 1：增加 2：减少');
+            $table->string('month')->commet('年月Ym');
+            $table->string('day')->commet('年月日Ymd');
             $table->timestamps();
         });
     }
@@ -30,6 +32,6 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('flows');
     }
 }

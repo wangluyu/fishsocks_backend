@@ -48,7 +48,7 @@ trait ApiResponse
             'message'=>$message,
             'data'=>$data
         );
-        return Response::json($response);
+        return Response::json($response,$response['code']);
     }
 
     /**
@@ -67,6 +67,10 @@ trait ApiResponse
      */
     public function success($message = 'success',$data = [],$code= FoundationResponse::HTTP_OK){
         return $this->setStatusCode($code)->response($message,$data);
+    }
+
+    public function successData($data = []){
+        return $this->success('success',$data);
     }
 
     /**

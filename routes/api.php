@@ -23,9 +23,12 @@ Route::prefix('auth')->group(function($router) {
     $router->post('logout', 'AuthController@logout');
 });
 
-Route::namespace('Api')->prefix('v1')->group(function ($router) {
+Route::namespace('Api')->prefix('v1')->group(function () {
     Route::middleware('refresh.token')->group(function($router) {
         $router->get('index','IndexController@index');
         $router->post('changePortPassword','IndexController@changePortPassword');
+        $router->get('getPayment','PaymentController@get');
+        $router->post('pay','PaymentController@pay');
+        $router->get('getCoupon','CouponController@get');
     });
 });

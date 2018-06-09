@@ -1,26 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api;
 
-use App\Balance;
 use App\Http\Controllers\Api\Helpers\ApiResponse;
 use App\Port;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Redis;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class IndexController extends Controller
 {
     use ApiResponse;
-
-    public $user;
-    public $user_id;
-    public function __construct()
-    {
-        $this->user = JWTAuth::parseToken()->authenticate();
-        $this->user_id = $this->user['id'];
-    }
 
     /**
      * 返回主页所需数据
@@ -33,31 +22,14 @@ class IndexController extends Controller
      */
     public function index(Request $request)
     {
+        $ss = Port::getByUser($this->user_id);
         $data = [
-            'balance'=>0,
-            'ss'=>[],
+            'ss'=>$ss,
             'link'=>[
                 'android'=>'',
                 'ios'=>''
             ]
         ];
-        $ss = [
-            'ip'=>'207.246.91.225',
-            'port'=>'',
-            'status'=>'',
-            'password'=>'',
-            'left_flow'=>0,
-            'total_flow'=>0
-        ];
-        $data['balance'] = floatval(Balance::where('user_id',$this->user_id)->value('balance'));
-        $port = Port::select('port','password','flow as total_flow','status')->where('user_id',$this->user_id)->get()->toArray();
-        if(!empty($port)){
-            foreach ($port as $p){
-                $ss = array_merge($ss,$p);
-                $ss['left_flow'] = $p['total_flow'] - Redis::hget('flow_'.$p['port'],date('Y-m'));
-                $data['ss'][] = $ss;
-            }
-        }
         return $this->success('',$data);
     }
 

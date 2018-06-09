@@ -47,4 +47,14 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+//    public function ports()
+//    {
+//        return $this->hasMany('App\Port');
+//    }
+
+    public function flows()
+    {
+        return $this->hasManyThrough('App\Flow','App\Port','user_id','port_id','id');
+    }
 }
